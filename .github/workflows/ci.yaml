@@ -33,29 +33,34 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ success() }}
     permissions:
-      pull-requests: write # Added permissions section
+      pull-requests: write
+      contents: write
     steps:
       - name: Enable auto-merge
         uses: actions/github-script@v6
         with:
           script: |
-            const { owner, repo, number } = context.issue;
+            const pr = github.context.payload.pull_request;
+            if (!pr) {
+              throw new Error("No pull request found in context.");
+            }
             await github.rest.pulls.merge({
-              owner,
-              repo,
-              pull_number: number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
               merge_method: 'squash',
             });
+
       - name: Add Success Comment
         uses: actions/github-script@v6
         with:
           script: |
-            const { owner, repo, number } = context.issue;
+            const pr = github.context.payload.pull_request;
             await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: number,
-              body: 'Code Passed All the test Cases and was auto-merged.'
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: '✅ Code passed all test cases and was auto-merged.',
             });
 
   create-issue-if-failed:
@@ -63,30 +68,31 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ failure() }}
     permissions:
-      issues: write # Added permissions section
+      issues: write
     steps:
       - name: Create issue on failed tests
         uses: actions/github-script@v6
         with:
           script: |
-            const { owner, repo, number } = context.issue;
-            const title = `Pull Request #${number} Failed Tests`;
-            const body = `Tests failed for pull request #${number}. Please check the test results.`;
+            const pr = github.context.payload.pull_request;
+            const title = `🚨 Pull Request #${pr.number} Failed Tests`;
+            const body = `Tests failed for pull request #${pr.number}. Please check the test results.`;
             await github.rest.issues.create({
-              owner,
-              repo,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
               title,
-              body
+              body,
             });
+
       - name: Create Comment
         uses: actions/github-script@v6
         with:
           script: |
-            const { owner, repo, number } = context.issue;
-            const comment = `Tests failed for pull request #${number}. Please fix the tests.`;
+            const pr = github.context.payload.pull_request;
+            const comment = `❌ Tests failed for pull request #${pr.number}. Please fix the tests.`;
             await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: number,
-              body: comment
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: comment,
             });
