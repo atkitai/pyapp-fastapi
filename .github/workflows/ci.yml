@@ -57,6 +57,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: ${{ failure() }}
+    permissions:
+      issues: write # Added permissions section
     steps:
       - name: Create issue on failed tests
         uses: actions/github-script@v6
