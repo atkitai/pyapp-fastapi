@@ -40,7 +40,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr = github.context.payload.pull_request;
+            const pr = context.payload.pull_request;
             if (!pr) {
               throw new Error("No pull request found in context.");
             }
@@ -55,7 +55,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr = github.context.payload.pull_request;
+            const pr = context.payload.pull_request;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -74,7 +74,10 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr = github.context.payload.pull_request;
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              throw new Error("No pull request info found.");
+            }
             const title = `🚨 Pull Request #${pr.number} Failed Tests`;
             const body = `Tests failed for pull request #${pr.number}. Please check the test results.`;
             await github.rest.issues.create({
@@ -88,11 +91,10 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const pr = github.context.payload.pull_request;
-            const comment = `❌ Tests failed for pull request #${pr.number}. Please fix the tests.`;
+            const pr = context.payload.pull_request;
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr.number,
-              body: comment,
+              body: `❌ Tests failed for pull request #${pr.number}. Please fix the tests.`,
             });
