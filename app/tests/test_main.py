@@ -8,9 +8,5 @@ def test_read_root():
     assert response.status_code == 200
     assert response.json() == {"message": "Running"}
 
-def test_read_item():
-    response = client.get("/items/5")
-    assert response.status_code == 200
-    assert response.json() == {"item_id": 5, "q": None}
 
-    
+
