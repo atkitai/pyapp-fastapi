@@ -1,0 +1,85 @@
+name: Test and Auto-Merge FastAPI API
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run tests
+        run: pytest app/tests/
+
+  auto-merge:
+    needs: test
+    runs-on: ubuntu-latest
+    if: ${{ success() }}
+    steps:
+      - name: Enable auto-merge
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            await github.rest.pulls.merge({
+              owner,
+              repo,
+              pull_number: number,
+              merge_method: 'squash',
+            });
+      - name: Add Success Comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: number,
+              body: 'Code Passed All the test Cases and was auto-merged.'
+            });
+
+  create-issue-if-failed:
+    needs: test
+    runs-on: ubuntu-latest
+    if: ${{ failure() }}
+    steps:
+      - name: Create issue on failed tests
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            const title = `Pull Request #${number} Failed Tests`;
+            const body = `Tests failed for pull request #${number}. Please check the test results.`;
+            await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body
+            });
+      - name: Create Comment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const { owner, repo, number } = context.issue;
+            const comment = `Tests failed for pull request #${number}. Please fix the tests.`;
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: number,
+              body: comment
+            });
