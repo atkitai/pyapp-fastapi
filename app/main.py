@@ -5,7 +5,7 @@ app = FastAPI()
 
 @app.get("/")
 def read_root():
-    return {"message": "Running"}
+    return {"message": "running"}
 
 
 
