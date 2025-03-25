@@ -32,6 +32,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: ${{ success() }}
+    permissions:
+      pull-requests: write # Added permissions section
     steps:
       - name: Enable auto-merge
         uses: actions/github-script@v6
@@ -61,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ failure() }}
     permissions:
-      issues: write
+      issues: write # Added permissions section
     steps:
       - name: Create issue on failed tests
         uses: actions/github-script@v6
